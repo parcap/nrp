@@ -1,26 +1,38 @@
-# Perform necessary imports
+import pandas as pd
+import numpy as np
+import db_scripts as dbs
+from Stats import Stats
 from bokeh.io import curdoc
-from bokeh.layouts import widgetbox
-from bokeh.models import Slider
-from bokeh.plotting import figure
+from bokeh.plotting import figure, output_file, show, ColumnDataSource
+from bokeh.layouts import row, column, gridplot, widgetbox
+from bokeh.models import HoverTool
+from bokeh.models.widgets import Panel, Tabs, Slider
 
-## Create a new plot: plot
-#plot = figure()
-#
-## Add a line to the plot
-#plot.line(x=[1,2,3,4,5], y=[2,5,4,6,7])
-#
-## Add the plot to the current document
-#curdoc().add_root(plot)
+test = Stats(pd.DataFrame({}), "daily", "TEST")
 
-# Create first slider: slider1
-slider1 = Slider(title="slider1", start=0, end=10, step=0.1, value=2)
+trials = 1
+mu = 0
+sigma = 40
+mcd = test.gbm(n_scenarios=trials, mu=mu, sigma=sigma)
 
-# Create second slider: slider2
-slider2 = Slider(title="slider2", start=10, end=100, step=1, value=20)
+def callback2(attr, old, new):
+    mu = slider2.value
+    sigma = slider3.value
+    new_data = test.gbm(n_scenarios=trials, mu=mu, sigma=sigma)
+    source.data = {"x": new_data.index, "y": new_data.values}
 
-# Add slider1 and slider2 to a widgetbox
-layout = widgetbox(slider1, slider2)
+slider2 = Slider(title="mu", start=-20, end=20, step=1, value=mu)
+slider3 = Slider(title="sigma", start=0, end=50, step=1, value=sigma)
+slider2.on_change("value", callback2)
+slider3.on_change("value", callback2)
+source = ColumnDataSource({"x": mcd.index, "y": mcd.values})
 
-# Add the layout to the current document
-curdoc().add_root(layout)
+plot2 = figure(title="GBM Stock Price Paths",
+               plot_width=1000,
+               plot_height=500)
+
+plot2.line("x", "y", color="firebrick", alpha=0.5, line_width=1, source=source)
+
+layout2 = column(slider2, slider3, plot2)
+curdoc().add_root(layout2)
+'''

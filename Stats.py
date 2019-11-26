@@ -294,7 +294,7 @@ class Stats(object):
 
         return cppi_backtest
 
-    def gbm(self, n_years=1, n_scenarios=1000, mu=7, sigma=15,
+    def gbm(self, n_years=1, n_scenarios=10, mu=7, sigma=15,
             frequency="daily", price0=100):
         steps_per_year = PPY[frequency]
         dt = 1 / steps_per_year

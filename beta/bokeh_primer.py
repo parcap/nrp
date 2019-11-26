@@ -1,18 +1,10 @@
-from bokeh.plotting import figure, ColumnDataSource
-from bokeh.io import output_file, show
-from bokeh.models import HoverTool, CategoricalColorMapper
 import numpy as np
 import pandas as pd
 
-# Create a ColumnDataSource from df: source
-source = ColumnDataSource(df)
-
-# Add circle glyphs to the figure p
-p.circle(x="Year", y="Time", size=8, color="color", source=source)
-
-# Specify the name of the output file and show the result
-output_file('sprint.html')
-show(p)
+# ******************************** BOKEH STACK ********************************
+from bokeh.plotting import figure, ColumnDataSource
+from bokeh.io import output_file, show
+from bokeh.models import HoverTool, CategoricalColorMapper
 
 
 ds = pd.read_csv("literacy_birth_rate.csv", header=0)
@@ -119,3 +111,47 @@ p.circle('weight', 'mpg', source=source,
 # Specify the name of the output file and show the result
 output_file('colormap.html')
 show(p)
+
+
+# Create a ColumnDataSource from df: source
+source = ColumnDataSource(df)
+
+# Add circle glyphs to the figure p
+p.circle(x="Year", y="Time", size=8, color="color", source=source)
+
+# Specify the name of the output file and show the result
+output_file('sprint.html')
+show(p)
+
+
+# Add the first circle glyph to the figure p
+p.circle('fertility', 'female_literacy', source=latin_america, size=10, color="red", legend=
+"Latin America")
+
+# Add the second circle glyph to the figure p
+p.circle('fertility', 'female_literacy', source=africa, size=10, color="blue", legend="Africa")
+
+# Assign the legend to the bottom left: p.legend.location
+p.legend.location="bottom_left"
+
+# Fill the legend background with the color 'lightgray': p.legend.background_fill_color
+p.legend.background_fill_color="lightgray"
+
+# Specify the name of the output_file and show the result
+output_file('fert_lit_groups.html')
+show(p)
+
+
+
+
+
+
+
+
+
+# ********************************* HOVERTOOL *********************************
+# Create a HoverTool object (bokeh.models)
+hover = HoverTool(tooltips=[("Country", "@Country")])
+
+# Add the HoverTool object to figure p
+p.add_tools(hover)

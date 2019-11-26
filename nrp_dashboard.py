@@ -2,10 +2,11 @@ import pandas as pd
 import numpy as np
 import db_scripts as dbs
 from Stats import Stats
+from bokeh.io import curdoc
 from bokeh.plotting import figure, output_file, show, ColumnDataSource
-from bokeh.layouts import row, column, gridplot
-from bokeh.charts import Histogram, defaults
-from bokeh.models.widgets import Panel, Tabs
+from bokeh.layouts import row, column, gridplot, widgetbox
+from bokeh.models import HoverTool
+from bokeh.models.widgets import Panel, Tabs, Slider
 
 
 TMP = "./temp-data-sources/"
@@ -21,6 +22,8 @@ elif IOS[0] == "file":
 pnl.to_csv(TMP + ROE) if IOS[1] else np.nan
 roe = pd.pivot_table(pnl, values="roe", index="date", columns="manager")
 roe = Stats(roe, "daily", "ROE")
+
+test = Stats(pd.DataFrame({}), "daily", "TEST")
 
 TGP = pd.Series([roe])
 
@@ -49,6 +52,14 @@ def bokeh_ts(source, col, title, xlab="", ylab="", width=500, height=300,
            alpha=alpha,
            line_width=line_width,
            source=source)
+    hover_dict = {"Vol": ("Volatility: ", "@Vol"),
+                  "Skew": ("Skewness: ", "@Skew"),
+                  "Kurt": ("Kurtosis: ", "@Kurt")}
+    hover = HoverTool(tooltips=[("Date: ", "@date{%F}"),
+                                hover_dict[col]],
+                            formatters={"date": "datetime"})
+    p.add_tools(hover)
+
     return p
 
 
@@ -71,32 +82,29 @@ def chart_stats(entity="PAR", obj=roe, window=252, start=1989, end=2049,
     start = str(start)
     end = str(end)
     r = s.r0[entity][start:end].dropna()
-    df = pd.DataFrame(r)
     begin = r.index.min().strftime("%m/%d/%Y")
     finish = r.index.max().strftime("%m/%d/%Y")
     n = str(r.count())
 
     title_vol = entity + " " + s.name + " - Volatility " + \
         "(" + begin + " - " + finish + ", " + n + " observations)"
-        
+
     title_skew = entity + " " + s.name + " - Skewness " + \
         "(" + begin + " - " + finish + ", " + n + " observations)"
 
     title_kurt = entity + " " + s.name + " - Kurtosis " + \
         "(" + begin + " - " + finish + ", " + n + " observations)"
 
-    obj_ret_hist = Histogram(df[entity], width= 500, height=300, bins=bins)
-    
-    roll_vol = r.rolling(window).apply(lambda x,
-        mode="annualized":s.hz_vol(x, mode))
+    roll_vol = r.rolling(window).apply(lambda x, mode="annualized":
+        s.hz_vol(x, mode))
 
     roll_skew = r.rolling(window).apply(lambda x: s.skewness(x))
 
     roll_kurt = r.rolling(window).apply(lambda x: s.kurtosis(x))
 
     stats_df = pd.DataFrame({"Vol": roll_vol,
-                            "Skew": roll_skew,
-                            "Kurt": roll_kurt})
+                             "Skew": roll_skew,
+                             "Kurt": roll_kurt})
     stats_source = ColumnDataSource(stats_df)
 
     vol = bokeh_ts(stats_source, "Vol", title_vol)
@@ -105,20 +113,17 @@ def chart_stats(entity="PAR", obj=roe, window=252, start=1989, end=2049,
 
     vol.x_range = skew.x_range = kurt.x_range
 
-    tab1 = Panel(child=obj_ret_hist, title='Daily Returns Analysis')
-    tab2 = Panel(child=row(vol, skew, kurt),
+    tab1 = Panel(child=row(vol, skew, kurt),
                  title='Statistical Moments')
 
-    stats_layout = Tabs(tabs=[tab1, tab2])
+    stats_layout = Tabs(tabs=[tab1])
 
     show(stats_layout)
 
-'''
-test = Stats(pd.DataFrame({}), "daily", "TEST")
-mcd = test.gbm(n_scenarios=5)
-bokeh_multiline(mcd, t="GBM Stock Price Paths")
-
-row1 = [None, vol]
-row2 = [skew, kurt]
-stats_layout = gridplot([row1, row2])
-'''
+def gen_stock_prices(n_trials=5):
+    mcd = test.gbm(n_scenarios=5)
+    plot = bokeh_multiline(mcd, title="GBM Stock Price Paths")
+    slider1 = Slider(title="# of Scenarios", start=10, end=200,
+                     step=1, value=30)
+    layout = column(widgetbox(slider1), plot)
+    curdoc().add_root(layout)
