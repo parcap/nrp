@@ -21,7 +21,7 @@ FMT = {"Figure Size": ((12, 5), (12, 5)),
 SRC = "Desktop"
 VAR = ["historic", "modified", "conditional"]
 IOC = (("database", True), ("csv", False))
-IOS = IOC[1]
+IOS = IOC[0]
 
 # ***************************** CONFIGURE DISPLAY *****************************
 if SRC == "Laptop":
