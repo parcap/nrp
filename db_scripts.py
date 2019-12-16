@@ -11,7 +11,10 @@ sql = ({"roe": ("select * from par_masterdata.python.",
                 "pmd"),
         "pnl": ("select * from par_masterdata.python.",
                 "holdings order by manager, date",
-                "pmd")
+                "pmd"),
+        "tpx": ("select * from par_stage.dbo.",
+                "target_price_data",
+                "psg")
         })
 
 
@@ -26,6 +29,12 @@ def open_par_masterdata_connection(db):
         cnx = pyodbc.connect("Driver={SQL Server};"
                              "Server=parcap-sql01;"
                              "Database=par_bi;"
+                             "Trusted_Connection=yes;")
+        
+    if db == "psg":
+        cnx = pyodbc.connect("Driver={SQL Server};"
+                             "Server=parcap-sql01;"
+                             "Database=par_stage;"
                              "Trusted_Connection=yes;")
 
     return cnx
@@ -56,5 +65,16 @@ def get_holdings(s=sql["pnl"]):
     df.columns = ["date", "month", "year", "investment", "symbol", "class",
                   "class2", "company", "industry", "manager", "manager2",
                   "shares", "exposure", "mv", "profit"]
+    df.set_index("date", inplace=True)
+    return df
+
+
+def get_target_prices(s=sql["tpx"]):
+    df = get_db_data(s[0] + s[1], s[2])
+    cols = ["date_valuation", "inv_group_id", "current_price",
+            "target_price_calc", "exposure", "entity"]
+    df = df[cols]
+    df.columns = ["date", "ticker", "close_price", "target_price",
+                  "exposure", "manager"]
     df.set_index("date", inplace=True)
     return df
